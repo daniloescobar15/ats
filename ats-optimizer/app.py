@@ -205,7 +205,9 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"✍️ [{current_step}/{total_steps}] Optimizando CV para ATS...")
-                results['optimized_cv'] = rewrite_cv(cv_text, jd_text)
+                # Pass gap analysis if available to improve the rewrite
+                gap_analysis_text = results.get('gaps', None)
+                results['optimized_cv'] = rewrite_cv(cv_text, jd_text, gap_analysis_text=gap_analysis_text)
             
             # Complete
             progress_bar.progress(1.0)

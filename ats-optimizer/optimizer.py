@@ -394,16 +394,64 @@ def analyze_format_structure(cv_text, job_description):
 
 # ---------------- REWRITE CV (OPTIMIZED) ----------------
 
-def rewrite_cv(cv_text, job_description):
+def rewrite_cv(cv_text, job_description, gap_analysis_text=None):
     system_prompt = """You are a world-class ATS resume optimizer and professional resume writer with expertise in:
     - Applicant Tracking System optimization and keyword integration
     - Creating compelling, achievement-focused resume content
     - Industry best practices for resume writing
     - Balancing ATS optimization with human readability
+    - Addressing skill gaps and experience gaps through strategic resume positioning
     
-    Your resumes consistently pass ATS filters while remaining compelling to human recruiters. You maintain complete truthfulness and never fabricate information."""
+    Your resumes consistently pass ATS filters while remaining compelling to human recruiters. You maintain complete truthfulness and never fabricate information. You excel at strategically reframing existing experience to address identified gaps."""
+
+    # Build the gap analysis section if provided
+    gap_analysis_section = ""
+    if gap_analysis_text:
+        gap_analysis_section = f"""
+
+    **CRITICAL: GAP ANALYSIS INSIGHTS** (Use these insights to guide your optimization):
+    
+    The following gap analysis has been performed comparing the candidate's resume with the job requirements. 
+    You MUST use these insights to strategically improve the resume:
+    
+    {gap_analysis_text}
+    
+    **SPECIFIC INSTRUCTIONS BASED ON GAP ANALYSIS**:
+    
+    1. **ADDRESS CRITICAL GAPS**: 
+       - For each critical gap identified, find ways to reframe existing experience to demonstrate related competencies
+       - Emphasize transferable skills that compensate for missing requirements
+       - Use strategic language that bridges identified gaps without fabricating experience
+    
+    2. **ENHANCE WEAKLY REPRESENTED SKILLS**:
+       - If the gap analysis shows skills are present but weakly represented, strengthen their presentation
+       - Add more specific examples and achievements related to these skills
+       - Use stronger action verbs and quantifiable metrics for these areas
+    
+    3. **FRAME EXPERIENCE TO MATCH REQUIREMENTS**:
+       - If experience gaps are identified, reframe existing roles to highlight relevant aspects
+       - Emphasize the most relevant parts of each position
+       - Use terminology from the job description that aligns with the candidate's actual experience
+    
+    4. **LEVERAGE IDENTIFIED STRENGTHS**:
+       - Amplify the strengths mentioned in the gap analysis
+       - Make these differentiating factors more prominent in the resume
+       - Use them to compensate for areas where gaps exist
+    
+    5. **ADDRESS QUALIFICATION GAPS**:
+       - If certifications or qualifications are missing, emphasize alternative ways the candidate demonstrates competency
+       - Highlight relevant experience, projects, or skills that show equivalent knowledge
+       - Use language that demonstrates proficiency even without formal credentials
+    
+    6. **IMPLEMENT QUICK IMPROVEMENTS**:
+       - Apply all quick improvement recommendations from the gap analysis
+       - Enhance wording, emphasis, and formatting as suggested
+       - Make the resume more impactful in areas where gaps were identified
+    
+    Remember: You must address the gaps strategically while maintaining complete accuracy. Never fabricate experience, but do reframe and emphasize existing experience to better match requirements."""
 
     user_prompt = f"""Rewrite and optimize this resume to maximize ATS alignment and impact while maintaining complete accuracy.
+{gap_analysis_section}
 
     OPTIMIZATION REQUIREMENTS:
 
@@ -449,7 +497,8 @@ def rewrite_cv(cv_text, job_description):
     TARGET JOB DESCRIPTION:
     {job_description}
 
-    Provide the complete optimized resume, maintaining all original information while significantly enhancing presentation, impact, and ATS compatibility."""
+    Provide the complete optimized resume, maintaining all original information while significantly enhancing presentation, impact, and ATS compatibility. 
+    {"CRITICALLY IMPORTANT: Use the gap analysis insights above to strategically address identified gaps and improve the resume's alignment with job requirements." if gap_analysis_text else ""}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.4)
 
