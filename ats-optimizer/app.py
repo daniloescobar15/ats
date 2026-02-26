@@ -74,6 +74,15 @@ if not st.session_state.api_initialized:
 with st.sidebar:
     st.header("⚙️ Configuración")
     st.markdown("---")
+    st.markdown("### 🌐 Idioma del reporte")
+    report_language = st.radio(
+        "Idioma del reporte / Report language",
+        options=["Español", "English"],
+        index=0,
+        label_visibility="collapsed"
+    )
+    lang_code = "es" if report_language == "Español" else "en"
+    st.markdown("---")
     st.markdown("### 📋 Análisis a realizar")
     
     run_keywords = st.checkbox("🔑 Extracción de Keywords", value=True)
@@ -133,7 +142,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"🔍 [{current_step}/{total_steps}] Extrayendo keywords de la descripción del trabajo...")
-                results['keywords'] = extract_keywords(jd_text)
+                results['keywords'] = extract_keywords(jd_text, language=lang_code)
             
             # Similarity score
             if run_similarity:
@@ -149,7 +158,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"🎯 [{current_step}/{total_steps}] Analizando matching de habilidades...")
-                results['skills'] = skills_matching_analysis(cv_text, jd_text)
+                results['skills'] = skills_matching_analysis(cv_text, jd_text, language=lang_code)
             
             # Gap analysis
             if run_gaps:
@@ -157,7 +166,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"🧠 [{current_step}/{total_steps}] Realizando análisis de brechas...")
-                results['gaps'] = gap_analysis(cv_text, jd_text)
+                results['gaps'] = gap_analysis(cv_text, jd_text, language=lang_code)
             
             # Achievements analysis
             if run_achievements:
@@ -165,7 +174,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"📈 [{current_step}/{total_steps}] Analizando logros cuantificables...")
-                results['achievements'] = analyze_achievements(cv_text)
+                results['achievements'] = analyze_achievements(cv_text, language=lang_code)
             
             # Action verbs analysis
             if run_verbs:
@@ -173,7 +182,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"💪 [{current_step}/{total_steps}] Analizando verbos de acción...")
-                results['verbs'] = analyze_action_verbs(cv_text, jd_text)
+                results['verbs'] = analyze_action_verbs(cv_text, jd_text, language=lang_code)
             
             # Experience level analysis
             if run_experience:
@@ -181,7 +190,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"👔 [{current_step}/{total_steps}] Analizando nivel de experiencia...")
-                results['experience'] = analyze_experience_level(cv_text, jd_text)
+                results['experience'] = analyze_experience_level(cv_text, jd_text, language=lang_code)
             
             # Format analysis
             if run_format:
@@ -189,7 +198,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"📐 [{current_step}/{total_steps}] Analizando formato y estructura...")
-                results['format'] = analyze_format_structure(cv_text, jd_text)
+                results['format'] = analyze_format_structure(cv_text, jd_text, language=lang_code)
             
             # Overall recommendations
             if run_recommendations:
@@ -197,7 +206,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 progress = current_step / total_steps
                 progress_bar.progress(progress)
                 status_text.text(f"💡 [{current_step}/{total_steps}] Generando recomendaciones generales...")
-                results['recommendations'] = get_overall_recommendations(cv_text, jd_text)
+                results['recommendations'] = get_overall_recommendations(cv_text, jd_text, language=lang_code)
             
             # CV optimization
             if run_optimize:
@@ -207,7 +216,7 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 status_text.text(f"✍️ [{current_step}/{total_steps}] Optimizando CV para ATS...")
                 # Pass gap analysis if available to improve the rewrite
                 gap_analysis_text = results.get('gaps', None)
-                results['optimized_cv'] = rewrite_cv(cv_text, jd_text, gap_analysis_text=gap_analysis_text)
+                results['optimized_cv'] = rewrite_cv(cv_text, jd_text, gap_analysis_text=gap_analysis_text, language=lang_code)
             
             # Complete
             progress_bar.progress(1.0)
@@ -304,6 +313,68 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
                 mime="text/plain",
                 use_container_width=True
             )
+        
+        # Build and offer full report download
+        if lang_code == "es":
+            report_title = "REPORTE COMPLETO - ATS Resume Optimizer"
+            sec_similarity = "Score de similitud"
+            sec_keywords = "Keywords extraídas"
+            sec_skills = "Análisis de matching de habilidades"
+            sec_gaps = "Análisis de brechas (Gap Analysis)"
+            sec_achievements = "Análisis de logros cuantificables"
+            sec_verbs = "Análisis de verbos de acción"
+            sec_experience = "Análisis de nivel de experiencia"
+            sec_format = "Análisis de formato y estructura"
+            sec_recommendations = "Recomendaciones generales"
+            sec_optimized = "CV optimizado para ATS"
+        else:
+            report_title = "FULL REPORT - ATS Resume Optimizer"
+            sec_similarity = "Similarity Score"
+            sec_keywords = "Extracted Keywords"
+            sec_skills = "Skills Matching Analysis"
+            sec_gaps = "Gap Analysis"
+            sec_achievements = "Quantifiable Achievements Analysis"
+            sec_verbs = "Action Verbs Analysis"
+            sec_experience = "Experience Level Analysis"
+            sec_format = "Format & Structure Analysis"
+            sec_recommendations = "Overall Recommendations"
+            sec_optimized = "Optimized CV for ATS"
+        
+        report_parts = [f"{report_title}\n", "=" * 60 + "\n"]
+        if run_similarity and 'similarity' in results:
+            report_parts.append(f"\n## {sec_similarity}\n{results['similarity']}%\n")
+        if run_keywords and 'keywords' in results:
+            report_parts.append(f"\n## {sec_keywords}\n{results['keywords']}\n")
+        if run_skills and 'skills' in results:
+            report_parts.append(f"\n## {sec_skills}\n{results['skills']}\n")
+        if run_gaps and 'gaps' in results:
+            report_parts.append(f"\n## {sec_gaps}\n{results['gaps']}\n")
+        if run_achievements and 'achievements' in results:
+            report_parts.append(f"\n## {sec_achievements}\n{results['achievements']}\n")
+        if run_verbs and 'verbs' in results:
+            report_parts.append(f"\n## {sec_verbs}\n{results['verbs']}\n")
+        if run_experience and 'experience' in results:
+            report_parts.append(f"\n## {sec_experience}\n{results['experience']}\n")
+        if run_format and 'format' in results:
+            report_parts.append(f"\n## {sec_format}\n{results['format']}\n")
+        if run_recommendations and 'recommendations' in results:
+            report_parts.append(f"\n## {sec_recommendations}\n{results['recommendations']}\n")
+        if run_optimize and 'optimized_cv' in results:
+            report_parts.append(f"\n## {sec_optimized}\n{results['optimized_cv']}\n")
+        
+        full_report = "\n".join(report_parts)
+        report_filename = "reporte_completo_ats.txt" if lang_code == "es" else "full_report_ats.txt"
+        
+        st.markdown("---")
+        st.markdown("### 📥 Descargar reporte completo")
+        st.download_button(
+            label="⬇️ Descargar reporte completo (todo el análisis)",
+            data=full_report,
+            file_name=report_filename,
+            mime="text/plain",
+            key="download_full_report",
+            use_container_width=True
+        )
         
         # Summary section
         st.markdown("---")

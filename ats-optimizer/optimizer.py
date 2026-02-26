@@ -84,9 +84,18 @@ def call_llm(system_prompt, user_prompt, model_name=MODEL_NAME, temperature=0.3)
     return response.json()["choices"][0]["message"]["content"]
 
 
+# ---------------- LANGUAGE HELPER ----------------
+
+def _language_instruction(language):
+    """Returns the instruction for output language. language is 'es' or 'en'."""
+    if language == "es":
+        return "\n\nIMPORTANT: You must respond entirely in Spanish (Español). All sections, headings, and content must be in Spanish."
+    return "\n\nIMPORTANT: You must respond entirely in English. All sections, headings, and content must be in English."
+
+
 # ---------------- KEYWORD EXTRACTION (OPTIMIZED) ----------------
 
-def extract_keywords(job_description):
+def extract_keywords(job_description, language="es"):
     system_prompt = """You are an expert HR analyst and ATS specialist with 15+ years of experience in talent acquisition across all industries. 
     Your expertise includes understanding how Applicant Tracking Systems parse and rank resumes based on keyword matching.
     You excel at identifying critical skills, competencies, certifications, and requirements that hiring managers prioritize, regardless of the field (HR, administration, sales, operations, etc.)."""
@@ -105,7 +114,7 @@ def extract_keywords(job_description):
     JOB DESCRIPTION:
     {job_description}
 
-    Provide a detailed, categorized list of all relevant keywords and requirements. Adapt your analysis to the specific field and role described."""
+    Provide a detailed, categorized list of all relevant keywords and requirements. Adapt your analysis to the specific field and role described.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.2)
 
@@ -120,7 +129,7 @@ def calculate_similarity(cv_text, job_description):
 
 # ---------------- SKILLS MATCHING ANALYSIS (NEW) ----------------
 
-def skills_matching_analysis(cv_text, job_description):
+def skills_matching_analysis(cv_text, job_description, language="es"):
     system_prompt = """You are a senior recruiter and career consultant specializing in skills assessment and candidate-job matching across all industries. 
     You have deep expertise in analyzing competencies (both hard and soft skills), transferable skills, and identifying skill gaps.
     Your analysis helps candidates understand exactly what they have and what they need to develop, whether in HR, administration, operations, or any other field."""
@@ -156,14 +165,14 @@ def skills_matching_analysis(cv_text, job_description):
     JOB DESCRIPTION:
     {job_description}
 
-    Be specific, actionable, and prioritize recommendations."""
+    Be specific, actionable, and prioritize recommendations.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.3)
 
 
 # ---------------- GAP ANALYSIS (OPTIMIZED) ----------------
 
-def gap_analysis(cv_text, job_description):
+def gap_analysis(cv_text, job_description, language="es"):
     system_prompt = """You are a senior career coach and recruiter with expertise in resume optimization and career development. 
     You specialize in identifying gaps between candidate profiles and job requirements, providing actionable insights that help candidates improve their marketability.
     Your analysis is thorough, constructive, and focuses on actionable improvements."""
@@ -207,14 +216,14 @@ def gap_analysis(cv_text, job_description):
     JOB DESCRIPTION:
     {job_description}
 
-    Be specific, prioritize by impact, and provide actionable recommendations."""
+    Be specific, prioritize by impact, and provide actionable recommendations.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.3)
 
 
 # ---------------- QUANTIFIABLE ACHIEVEMENTS ANALYSIS (NEW) ----------------
 
-def analyze_achievements(cv_text):
+def analyze_achievements(cv_text, language="es"):
     system_prompt = """You are an expert resume writer specializing in quantifying achievements and impact. 
     You understand that recruiters and ATS systems prioritize resumes with measurable results, metrics, and concrete outcomes.
     You help candidates transform vague descriptions into powerful, quantifiable statements."""
@@ -249,14 +258,14 @@ def analyze_achievements(cv_text):
     CANDIDATE RESUME:
     {cv_text}
 
-    Focus on making achievements more impactful and ATS-friendly through quantification."""
+    Focus on making achievements more impactful and ATS-friendly through quantification.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.3)
 
 
 # ---------------- ACTION VERBS ANALYSIS (NEW) ----------------
 
-def analyze_action_verbs(cv_text, job_description):
+def analyze_action_verbs(cv_text, job_description, language="es"):
     system_prompt = """You are a professional resume writer and career coach specializing in powerful language and action verbs.
     You understand that strong action verbs make resumes more compelling and help candidates stand out in ATS systems.
     You provide specific, industry-appropriate verb suggestions that align with job requirements."""
@@ -291,14 +300,14 @@ def analyze_action_verbs(cv_text, job_description):
     JOB DESCRIPTION:
     {job_description}
 
-    Make the resume more dynamic and impactful through better verb choices."""
+    Make the resume more dynamic and impactful through better verb choices.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.3)
 
 
 # ---------------- EXPERIENCE LEVEL ANALYSIS (NEW) ----------------
 
-def analyze_experience_level(cv_text, job_description):
+def analyze_experience_level(cv_text, job_description, language="es"):
     system_prompt = """You are a senior recruiter and career analyst with expertise in assessing candidate experience levels and career progression.
     You understand how to match candidate experience with job requirements and identify if a candidate is underqualified, well-matched, or overqualified.
     You provide insights on how to position experience effectively."""
@@ -338,14 +347,14 @@ def analyze_experience_level(cv_text, job_description):
     JOB DESCRIPTION:
     {job_description}
 
-    Provide actionable insights on experience positioning."""
+    Provide actionable insights on experience positioning.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.3)
 
 
 # ---------------- FORMAT & STRUCTURE RECOMMENDATIONS (NEW) ----------------
 
-def analyze_format_structure(cv_text, job_description):
+def analyze_format_structure(cv_text, job_description, language="es"):
     system_prompt = """You are an ATS optimization expert and resume formatting specialist.
     You understand how different ATS systems parse resumes and what formatting choices maximize compatibility and readability.
     You provide specific recommendations for resume structure, sections, and formatting that improve both ATS parsing and human readability."""
@@ -387,14 +396,14 @@ def analyze_format_structure(cv_text, job_description):
     JOB DESCRIPTION:
     {job_description}
 
-    Focus on both ATS compatibility and human readability."""
+    Focus on both ATS compatibility and human readability.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.3)
 
 
 # ---------------- REWRITE CV (OPTIMIZED) ----------------
 
-def rewrite_cv(cv_text, job_description, gap_analysis_text=None):
+def rewrite_cv(cv_text, job_description, gap_analysis_text=None, language="es"):
     system_prompt = """You are a world-class ATS resume optimizer and professional resume writer with expertise in:
     - Applicant Tracking System optimization and keyword integration
     - Creating compelling, achievement-focused resume content
@@ -498,14 +507,15 @@ def rewrite_cv(cv_text, job_description, gap_analysis_text=None):
     {job_description}
 
     Provide the complete optimized resume, maintaining all original information while significantly enhancing presentation, impact, and ATS compatibility. 
-    {"CRITICALLY IMPORTANT: Use the gap analysis insights above to strategically address identified gaps and improve the resume's alignment with job requirements." if gap_analysis_text else ""}"""
+    {"CRITICALLY IMPORTANT: Use the gap analysis insights above to strategically address identified gaps and improve the resume's alignment with job requirements. " if gap_analysis_text else ""}
+    {"Write the entire optimized resume in Spanish (Español)." if language == "es" else "Write the entire optimized resume in English."}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.4)
 
 
 # ---------------- OVERALL RECOMMENDATIONS (NEW) ----------------
 
-def get_overall_recommendations(cv_text, job_description):
+def get_overall_recommendations(cv_text, job_description, language="es"):
     system_prompt = """You are a senior career coach and resume expert with comprehensive knowledge of resume optimization, ATS systems, and job market trends.
     You provide holistic, strategic recommendations that help candidates improve their overall resume quality and marketability.
     Your advice is practical, prioritized, and actionable."""
@@ -544,6 +554,6 @@ def get_overall_recommendations(cv_text, job_description):
     JOB DESCRIPTION:
     {job_description}
 
-    Be specific, actionable, and prioritize by impact and effort required."""
+    Be specific, actionable, and prioritize by impact and effort required.{_language_instruction(language)}"""
     
     return call_llm(system_prompt, user_prompt, temperature=0.3)
