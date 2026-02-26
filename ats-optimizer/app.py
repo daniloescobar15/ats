@@ -1,5 +1,7 @@
 import streamlit as st
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 os.environ['STREAMLIT'] = '1'
 
 from optimizer import (
@@ -127,98 +129,52 @@ if st.button("🔎 Iniciar Análisis Completo", type="primary", use_container_wi
         
         results = {}
         
-        # Calculate total steps
-        total_steps = sum([
-            run_keywords, run_similarity, run_skills, run_gaps, 
-            run_achievements, run_verbs, run_experience, run_format, 
-            run_recommendations, run_optimize
-        ])
-        current_step = 0
+        # Tasks that can run in parallel (no dependencies)
+        parallel_tasks = []
+        if run_keywords:
+            parallel_tasks.append(('keywords', lambda: extract_keywords(jd_text, language=lang_code), '🔑 Keywords'))
+        if run_similarity:
+            parallel_tasks.append(('similarity', lambda: calculate_similarity(cv_text, jd_text), '📊 Similitud'))
+        if run_skills:
+            parallel_tasks.append(('skills', lambda: skills_matching_analysis(cv_text, jd_text, language=lang_code), '🎯 Habilidades'))
+        if run_gaps:
+            parallel_tasks.append(('gaps', lambda: gap_analysis(cv_text, jd_text, language=lang_code), '🧠 Brechas'))
+        if run_achievements:
+            parallel_tasks.append(('achievements', lambda: analyze_achievements(cv_text, language=lang_code), '📈 Logros'))
+        if run_verbs:
+            parallel_tasks.append(('verbs', lambda: analyze_action_verbs(cv_text, jd_text, language=lang_code), '💪 Verbos'))
+        if run_experience:
+            parallel_tasks.append(('experience', lambda: analyze_experience_level(cv_text, jd_text, language=lang_code), '👔 Experiencia'))
+        if run_format:
+            parallel_tasks.append(('format', lambda: analyze_format_structure(cv_text, jd_text, language=lang_code), '📐 Formato'))
+        if run_recommendations:
+            parallel_tasks.append(('recommendations', lambda: get_overall_recommendations(cv_text, jd_text, language=lang_code), '💡 Recomendaciones'))
+        
+        total_steps = len(parallel_tasks) + (1 if run_optimize else 0)
+        completed = 0
         
         try:
-            # Keywords extraction
-            if run_keywords:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"🔍 [{current_step}/{total_steps}] Extrayendo keywords de la descripción del trabajo...")
-                results['keywords'] = extract_keywords(jd_text, language=lang_code)
+            # Phase 1: run all independent analyses in parallel
+            with ThreadPoolExecutor(max_workers=len(parallel_tasks) or 1) as executor:
+                future_to_key = {executor.submit(fn): (key, label) for key, fn, label in parallel_tasks}
+                for future in as_completed(future_to_key):
+                    key, label = future_to_key[future]
+                    try:
+                        results[key] = future.result()
+                    except Exception as e:
+                        raise RuntimeError(f"Error en {label}: {e}") from e
+                    completed += 1
+                    progress_bar.progress(completed / total_steps)
+                    status_text.text(f"✅ [{completed}/{total_steps}] {label} listo. Esperando resto en paralelo...")
             
-            # Similarity score
-            if run_similarity:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"⚖️ [{current_step}/{total_steps}] Calculando similitud semántica...")
-                results['similarity'] = calculate_similarity(cv_text, jd_text)
-            
-            # Skills matching
-            if run_skills:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"🎯 [{current_step}/{total_steps}] Analizando matching de habilidades...")
-                results['skills'] = skills_matching_analysis(cv_text, jd_text, language=lang_code)
-            
-            # Gap analysis
-            if run_gaps:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"🧠 [{current_step}/{total_steps}] Realizando análisis de brechas...")
-                results['gaps'] = gap_analysis(cv_text, jd_text, language=lang_code)
-            
-            # Achievements analysis
-            if run_achievements:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"📈 [{current_step}/{total_steps}] Analizando logros cuantificables...")
-                results['achievements'] = analyze_achievements(cv_text, language=lang_code)
-            
-            # Action verbs analysis
-            if run_verbs:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"💪 [{current_step}/{total_steps}] Analizando verbos de acción...")
-                results['verbs'] = analyze_action_verbs(cv_text, jd_text, language=lang_code)
-            
-            # Experience level analysis
-            if run_experience:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"👔 [{current_step}/{total_steps}] Analizando nivel de experiencia...")
-                results['experience'] = analyze_experience_level(cv_text, jd_text, language=lang_code)
-            
-            # Format analysis
-            if run_format:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"📐 [{current_step}/{total_steps}] Analizando formato y estructura...")
-                results['format'] = analyze_format_structure(cv_text, jd_text, language=lang_code)
-            
-            # Overall recommendations
-            if run_recommendations:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"💡 [{current_step}/{total_steps}] Generando recomendaciones generales...")
-                results['recommendations'] = get_overall_recommendations(cv_text, jd_text, language=lang_code)
-            
-            # CV optimization
+            # Phase 2: rewrite_cv depends on gap_analysis — run after parallel phase
             if run_optimize:
-                current_step += 1
-                progress = current_step / total_steps
-                progress_bar.progress(progress)
-                status_text.text(f"✍️ [{current_step}/{total_steps}] Optimizando CV para ATS...")
-                # Pass gap analysis if available to improve the rewrite
+                progress_bar.progress(completed / total_steps)
+                status_text.text(f"✍️ [{completed + 1}/{total_steps}] Optimizando CV para ATS (usa análisis de brechas)...")
                 gap_analysis_text = results.get('gaps', None)
                 results['optimized_cv'] = rewrite_cv(cv_text, jd_text, gap_analysis_text=gap_analysis_text, language=lang_code)
+                completed += 1
             
-            # Complete
             progress_bar.progress(1.0)
             status_text.success("✅ ¡Análisis completo! Revisa los resultados a continuación.")
             
